@@ -13,9 +13,11 @@ public class DatabaseConfig {
     public DataSource dataSource() {
         String databaseUrl = System.getenv("DATABASE_URL");
 
+        System.out.println("Original DATABASE_URL: " + databaseUrl);
+
         if (databaseUrl != null && databaseUrl.startsWith("postgresql://")) {
-            // Fix Railway's URL format to be JDBC-compatible
             databaseUrl = "jdbc:" + databaseUrl;
+            System.out.println("Fixed DATABASE_URL: " + databaseUrl);
         }
 
         return DataSourceBuilder
