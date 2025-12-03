@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.sql.DataSource;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 @Configuration
 public class DatabaseConfig {
@@ -13,16 +15,37 @@ public class DatabaseConfig {
     public DataSource dataSource() {
         String databaseUrl = System.getenv("DATABASE_URL");
 
-        System.out.println("Original DATABASE_URL: " + databaseUrl);
-
         if (databaseUrl != null && databaseUrl.startsWith("postgresql://")) {
-            databaseUrl = "jdbc:" + databaseUrl;
-            System.out.println("Fixed DATABASE_URL: " + databaseUrl);
+            try {
+                // Parse Railway's URL format
+                URI dbUri = new URI(databaseUrl);
+
+                String username = dbUri.getUserInfo().split(":")[0];
+                String password = dbUri.getUserInfo().split(":")[1];
+                String dbUrl = "jdbc:postgresql://" + dbUri.getHost() + ':' + dbUri.getPort() + dbUri.getPath();
+
+                System.out.println("Parsed JDBC URL: " + dbUrl);
+                System.out.println("Username: " + username);
+
+                return DataSourceBuilder
+                        .create()
+                        .url(dbUrl)
+                        .username(username)
+                        .password(password)
+                        .driverClassName("org.postgresql.Driver")
+                        .build();
+
+            } catch (URISyntaxException e) {
+                throw new RuntimeException("Invalid DATABASE_URL format", e);
+            }
         }
 
+        // Fallback for local development
         return DataSourceBuilder
                 .create()
-                .url(databaseUrl != null ? databaseUrl : "jdbc:postgresql://localhost:5432/universitydb")
+                .url("jdbc:postgresql://localhost:5432/universitydb")
+                .username("postgres")
+                .password("")
                 .driverClassName("org.postgresql.Driver")
                 .build();
     }
