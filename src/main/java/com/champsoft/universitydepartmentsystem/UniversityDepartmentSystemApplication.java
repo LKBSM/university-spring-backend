@@ -30,6 +30,10 @@ public class UniversityDepartmentSystemApplication {
     @Bean
     CommandLineRunner runner(DepartmentRepository departmentRepository, ProfessorRepository professorRepository) {
         return args -> {
+            if (departmentRepository.count() > 0) {
+                logger.info("Data already exists in database. Skipping seeding.");
+                return;
+            }
             logger.info("Starting data seeding...");
 
             // 1. Seed Department data (10 records)
